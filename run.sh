@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 gpu_n=$1
 DATASET=$2
 
