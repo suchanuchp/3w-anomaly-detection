@@ -7,30 +7,27 @@ import numpy as np
 
 
 class TimeDataset(Dataset):
-    def __init__(self, raw_data, edge_index, mode='train', config = None):
-        self.raw_data = raw_data
+    def __init__(self, xs, labels, edge_index, mode='train', config=None):
+        # self.raw_data = raw_data
+        self.xs = xs
+        self.labels = labels
 
         self.config = config
         self.edge_index = edge_index
         self.mode = mode
 
-        x_data = raw_data[:-1]
-        labels = raw_data[-1]
-
-
-        data = x_data
-
-        # to tensor
-        data = torch.tensor(data).double()
-        labels = torch.tensor(labels).double()
+        data = [torch.tensor(x).double() for x in xs]
+        labels = [torch.tensor(label).double() for label in labels]
 
         self.x, self.y, self.labels = self.process(data, labels)
     
     def __len__(self):
         return len(self.x)
 
-
-    def process(self, data, labels):
+    def process(self, xs, labels):  # modify here
+        # instances: List of time-series instances -> have to be a list of torch.tensor(data).double()
+        # data: 2d-array = [xs1, xs2, ...] where xs1 = feature_1 for all data
+        # row = features, col = timestamps
         x_arr, y_arr = [], []
         labels_arr = []
 
@@ -39,21 +36,25 @@ class TimeDataset(Dataset):
         ]
         is_train = self.mode == 'train'
 
-        node_num, total_time_len = data.shape
+        # node_num, total_time_len = data.shape # n_features, n_timesteps
 
-        rang = range(slide_win, total_time_len, slide_stride) if is_train else range(slide_win, total_time_len)
-        
-        for i in rang:
+        # rang = range(slide_win, total_time_len, slide_stride) if is_train else range(slide_win, total_time_len)
 
-            ft = data[:, i-slide_win:i]
-            tar = data[:, i]
+        # for data in data_lst
+        for data, label in zip(xs, labels):
+            node_num, total_time_len = data.shape
+            rang = range(slide_win, total_time_len, slide_stride) if is_train else range(slide_win, total_time_len)
+            for i in rang:
 
-            x_arr.append(ft)
-            y_arr.append(tar)
+                ft = data[:, i-slide_win:i]  # select all features for i-slide_win:i timesteps
+                tar = data[:, i]  # multivariate timeseries to be predicted
 
-            labels_arr.append(labels[i])
+                x_arr.append(ft)
+                y_arr.append(tar)
 
+                labels_arr.append(label[i])  # abnormal/normal labels
 
+        # each x = [x1, x2, ...] where x1 = sliding window of size slide_win
         x = torch.stack(x_arr).contiguous()
         y = torch.stack(y_arr).contiguous()
 

@@ -1,6 +1,10 @@
 # preprocess data
 import numpy as np
 import re
+import pandas as pd
+from typing import List
+from util.const import LABEL_COL
+# from utils.cons
 
 
 def get_most_common_features(target, all_features, max = 3, min = 3):
@@ -64,6 +68,23 @@ def build_net(target, all_features):
     return edge_indexes, index_feature_map
 
 
+def split_to_instances(df):
+    instances: List[pd.DataFrame] = []
+
+    if 'start' not in df.columns:
+        return [df]
+
+    start_idx = df[df['start'] == 1].index
+    if len(start_idx) > 1:
+        for i in range(len(start_idx)-1):
+            s = start_idx[i]
+            t = start_idx[i+1]
+            instances.append(df.iloc[s:t])
+        instances.append(df.iloc[start_idx[-1]:])
+    else:
+        instances.append(df)
+    return instances
+
 def construct_data(data, feature_map, labels=0):
     res = []
 
@@ -81,6 +102,31 @@ def construct_data(data, feature_map, labels=0):
         res.append(labels)
 
     return res
+
+
+def construct_data_v2(data, feature_map, labels=0):
+    # want a list of data: [, labels]
+    features = []  # [[x1, x2, ...], [x1, x2, ...], ...]
+    lbs = []  # [[y1, y2, ...], [y1, y2, ...], ...]
+
+    df_instances = split_to_instances(data)
+    print('len')
+    print(len(df_instances))
+    for df in df_instances:
+        xs = [df.loc[:, feature].values.tolist() for feature in feature_map]
+
+        sample_n = len(xs[0])
+        if type(labels) == int:
+            lb = [labels] * sample_n
+        else:
+            lb = df[LABEL_COL].values.tolist()
+
+        features.append(xs)
+        print(np.max(lb))
+        lbs.append(lb)
+
+    return features, lbs
+
 
 def build_loc_net(struc, all_features, feature_map=[]):
 

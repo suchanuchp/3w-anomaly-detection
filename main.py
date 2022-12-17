@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, random_split, Subset
 from sklearn.preprocessing import MinMaxScaler
 
 from util.env import get_device, set_device
-from util.preprocess import build_loc_net, construct_data
+from util.preprocess import build_loc_net, construct_data, construct_data_v2
 from util.net_struct import get_feature_map, get_fc_graph_struc
 from util.iostream import printsep
 
@@ -27,6 +27,7 @@ from datetime import datetime
 import os
 import argparse
 from pathlib import Path
+from util.const import LABEL_COL
 
 import matplotlib.pyplot as plt
 
@@ -46,8 +47,8 @@ class Main():
        
         train, test = train_orig, test_orig
 
-        if 'attack' in train.columns:
-            train = train.drop(columns=['attack'])
+        # if 'attack' in train.columns:
+        #     train = train.drop(columns=['attack'])
 
         feature_map = get_feature_map(dataset)
         fc_struc = get_fc_graph_struc(dataset)
@@ -55,25 +56,27 @@ class Main():
         set_device(env_config['device'])
         self.device = get_device()
 
-        fc_edge_index = build_loc_net(fc_struc, list(train.columns), feature_map=feature_map)
+        fc_edge_index = build_loc_net(fc_struc, [col for col in train.columns if col != LABEL_COL], feature_map=feature_map)
         fc_edge_index = torch.tensor(fc_edge_index, dtype = torch.long)
 
         self.feature_map = feature_map
 
-        train_dataset_indata = construct_data(train, feature_map, labels=0)
-        test_dataset_indata = construct_data(test, feature_map, labels=test.attack.tolist())
-
+        # train_dataset_indata = construct_data(train, feature_map, labels=0)  # list of [features, labels]
+        # test_dataset_indata = construct_data(test, feature_map, labels=test.attack.tolist())
+        train_xs, train_ys = construct_data_v2(train, feature_map, labels=0)
+        test_xs, test_ys = construct_data_v2(test, feature_map, labels=None)
 
         cfg = {
             'slide_win': train_config['slide_win'],
             'slide_stride': train_config['slide_stride'],
         }
 
-        train_dataset = TimeDataset(train_dataset_indata, fc_edge_index, mode='train', config=cfg)
-        test_dataset = TimeDataset(test_dataset_indata, fc_edge_index, mode='test', config=cfg)
+        # train_dataset = TimeDataset(train_dataset_indata, fc_edge_index, mode='train', config=cfg)
+        # test_dataset = TimeDataset(test_dataset_indata, fc_edge_index, mode='test', config=cfg)
+        train_dataset = TimeDataset(train_xs, train_ys, fc_edge_index, mode='train', config=cfg)
+        test_dataset = TimeDataset(test_xs, test_ys, fc_edge_index, mode='test', config=cfg)
 
-
-        train_dataloader, val_dataloader = self.get_loaders(train_dataset, train_config['seed'], train_config['batch'], val_ratio = train_config['val_ratio'])
+        train_dataloader, val_dataloader = self.get_loaders(train_dataset, train_config['seed'], train_config['batch'], val_ratio=train_config['val_ratio'])
 
         self.train_dataset = train_dataset
         self.test_dataset = test_dataset
