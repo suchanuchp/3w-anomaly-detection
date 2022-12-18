@@ -146,10 +146,15 @@ def get_best_performance_data(total_err_scores, gt_labels, topk=1):
     pred_labels = np.zeros(len(total_topk_err_scores))
     pred_labels[total_topk_err_scores > thresold] = 1
 
+    # Todo: Nice checks this
     for i in range(len(pred_labels)):
         pred_labels[i] = int(pred_labels[i])
         gt_labels[i] = int(gt_labels[i])
-
+    # print(f'====================gt_labels ============ {gt_labels}')
+    f = open('results_pkl/predicted_labels.pkl', 'wb')
+    import pickle
+    pickle.dump(pred_labels, f)
+    f.close()
     pre = precision_score(gt_labels, pred_labels)
     rec = recall_score(gt_labels, pred_labels)
 

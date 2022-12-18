@@ -131,6 +131,13 @@ class Main():
         _, self.test_result = test(best_model, self.test_dataloader)
         _, self.val_result = test(best_model, self.val_dataloader)
 
+        import pickle
+        # Todo: Nice
+        f = open('results_pkl/test_result2.pkl','wb')
+        pickle.dump(self.test_result, f)
+        f.close()
+
+
         self.get_score(self.test_result, self.val_result)
 
     def get_loaders(self, train_dataset, seed, batch, val_ratio=0.1):
@@ -188,7 +195,7 @@ class Main():
         
         if self.datestr is None:
             now = datetime.now()
-            self.datestr = now.strftime('%m|%d-%H:%M:%S')
+            self.datestr = now.strftime('%m-%d-%H-%M-%S')
         datestr = self.datestr          
 
         paths = [

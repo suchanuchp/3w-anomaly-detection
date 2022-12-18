@@ -14,7 +14,7 @@ from sklearn.metrics import precision_score, recall_score, roc_auc_score, f1_sco
 from torch.utils.data import DataLoader, random_split, Subset
 from scipy.stats import iqr
 
-
+from platform import system
 
 
 def loss_func(y_pred, y_true):
@@ -91,6 +91,12 @@ def train(model = None, save_path = '', config={},  train_dataloader=None, val_d
             val_loss, val_result = test(model, val_dataloader)
 
             if val_loss < min_loss:
+                if system() == 'Windows':
+                    save_path = save_path.replace(':', '_').replace('|', '_')  #+ "_" + str(args.content_weight) + "_" + str(args.style_weight) + ".pth"
+                # else:
+                #     save_model_filename = "epoch_" + str(args.epochs) + "_" + str(time.ctime()).replace(' ',
+                #                                                                                         '_') + "_" + str(
+                #         args.content_weight) + "_" + str(args.style_weight) + ".model"
                 torch.save(model.state_dict(), save_path)
 
                 min_loss = val_loss
@@ -104,6 +110,8 @@ def train(model = None, save_path = '', config={},  train_dataloader=None, val_d
 
         else:
             if acu_loss < min_loss :
+                if system() == 'Windows':
+                    save_path = save_path.replace(':', '_').replace('|', '_')
                 torch.save(model.state_dict(), save_path)
                 min_loss = acu_loss
 
