@@ -7,7 +7,7 @@ import numpy as np
 
 
 class TimeDataset(Dataset):
-    def __init__(self, xs, labels, edge_index, mode='train', config=None):
+    def __init__(self, xs, labels, edge_index, mode='train', config=None, normalizer=None):
         # self.raw_data = raw_data
         self.xs = xs
         self.labels = labels
@@ -15,6 +15,10 @@ class TimeDataset(Dataset):
         self.config = config
         self.edge_index = edge_index
         self.mode = mode
+        self.normalizer = normalizer
+
+        if mode != 'train':
+            assert normalizer is not None
 
         data = [torch.tensor(x).double() for x in xs]
         labels = [torch.tensor(label).double() for label in labels]
@@ -47,14 +51,31 @@ class TimeDataset(Dataset):
             for i in rang:
 
                 ft = data[:, i-slide_win:i]  # select all features for i-slide_win:i timesteps
+                # row = features, column = time
                 tar = data[:, i]  # multivariate timeseries to be predicted
 
                 x_arr.append(ft)
                 y_arr.append(tar)
+                # x_arr = [data_all_feat1, data_all_feat2, ...]   data_all_feat1: row = features, column = time
 
                 labels_arr.append(label[i])  # abnormal/normal labels
 
         # each x = [x1, x2, ...] where x1 = sliding window of size slide_win
+
+        #should normalize here
+        # x_arr = np.array(x_arr)  # row = features, column = time
+        xs_flatten = []
+        if self.mode == 'train':
+            for x_time_window in x_arr:  # for time
+                # for i in range(len(x_time_window[0])):
+                #     print(x_time_window[:, i])
+                xs_flatten += [list(x_time_window[:, i]) for i in range(len(x_time_window[0]))]  # loop over time index
+            normalizer = MinMaxScaler(feature_range=(0, 1)).fit(xs_flatten)
+            self.normalizer = normalizer
+
+        x_arr = [torch.Tensor(self.normalizer.transform(xx.T).T.tolist()).double() for xx in x_arr]
+        y_arr = [torch.Tensor(self.normalizer.transform([yy.tolist()])[0]).double() for yy in y_arr]
+
         x = torch.stack(x_arr).contiguous()
         y = torch.stack(y_arr).contiguous()
 

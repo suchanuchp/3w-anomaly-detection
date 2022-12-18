@@ -66,6 +66,8 @@ class Main():
         train_xs, train_ys = construct_data_v2(train, feature_map, labels=0)
         test_xs, test_ys = construct_data_v2(test, feature_map, labels=None)
 
+        # train_xs, test_xs = norm(train_xs, test_xs)
+
         cfg = {
             'slide_win': train_config['slide_win'],
             'slide_stride': train_config['slide_stride'],
@@ -73,8 +75,10 @@ class Main():
 
         # train_dataset = TimeDataset(train_dataset_indata, fc_edge_index, mode='train', config=cfg)
         # test_dataset = TimeDataset(test_dataset_indata, fc_edge_index, mode='test', config=cfg)
+        # make scaler
         train_dataset = TimeDataset(train_xs, train_ys, fc_edge_index, mode='train', config=cfg)
-        test_dataset = TimeDataset(test_xs, test_ys, fc_edge_index, mode='test', config=cfg)
+        normalizer = train_dataset.normalizer
+        test_dataset = TimeDataset(test_xs, test_ys, fc_edge_index, mode='test', config=cfg, normalizer=normalizer)
 
         train_dataloader, val_dataloader = self.get_loaders(train_dataset, train_config['seed'], train_config['batch'], val_ratio=train_config['val_ratio'])
 
@@ -119,7 +123,8 @@ class Main():
                 dataset_name=self.env_config['dataset']
             )
         
-        # test            
+        # test
+        print(f'model save path {model_save_path}')
         self.model.load_state_dict(torch.load(model_save_path))
         best_model = self.model.to(self.device)
 
@@ -193,7 +198,9 @@ class Main():
 
         for path in paths:
             dirname = os.path.dirname(path)
-            Path(dirname).mkdir(parents=True, exist_ok=True)
+            print('ll')
+            print(dirname)
+            print(Path(dirname).mkdir(parents=True, exist_ok=True))
 
         return paths
 
@@ -203,9 +210,9 @@ if __name__ == "__main__":
 
     parser.add_argument('-batch', help='batch size', type = int, default=128)
     parser.add_argument('-epoch', help='train epoch', type = int, default=100)
-    parser.add_argument('-slide_win', help='slide_win', type = int, default=15)
+    parser.add_argument('-slide_win', help='slide_win', type = int, default=50)
     parser.add_argument('-dim', help='dimension', type = int, default=64)
-    parser.add_argument('-slide_stride', help='slide_stride', type = int, default=5)
+    parser.add_argument('-slide_stride', help='slide_stride', type = int, default=15)
     parser.add_argument('-save_path_pattern', help='save path pattern', type = str, default='')
     parser.add_argument('-dataset', help='wadi / swat', type = str, default='wadi')
     parser.add_argument('-device', help='cuda / cpu', type = str, default='cuda')
@@ -253,7 +260,8 @@ if __name__ == "__main__":
         'device': args.device,
         'load_model_path': args.load_model_path
     }
-    
+
+    print(f'model path:{args.load_model_path}')
 
     main = Main(train_config, env_config, debug=False)
     main.run()

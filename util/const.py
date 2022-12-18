@@ -1,1 +1,1 @@
-LABEL_COL = 'attack'  #'class'
+LABEL_COL = 'class'

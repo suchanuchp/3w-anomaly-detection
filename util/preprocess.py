@@ -110,8 +110,6 @@ def construct_data_v2(data, feature_map, labels=0):
     lbs = []  # [[y1, y2, ...], [y1, y2, ...], ...]
 
     df_instances = split_to_instances(data)
-    print('len')
-    print(len(df_instances))
     for df in df_instances:
         xs = [df.loc[:, feature].values.tolist() for feature in feature_map]
 
@@ -122,7 +120,6 @@ def construct_data_v2(data, feature_map, labels=0):
             lb = df[LABEL_COL].values.tolist()
 
         features.append(xs)
-        print(np.max(lb))
         lbs.append(lb)
 
     return features, lbs

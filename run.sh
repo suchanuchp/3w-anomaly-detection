@@ -3,12 +3,12 @@ gpu_n=$1
 DATASET=$2
 
 seed=5
-BATCH_SIZE=32
-SLIDE_WIN=5
+BATCH_SIZE=128
+SLIDE_WIN=50
 dim=64
 out_layer_num=1
-SLIDE_STRIDE=1
-topk=5
+SLIDE_STRIDE=15
+topk=3
 out_layer_inter_dim=128
 val_ratio=0.2
 decay=0
