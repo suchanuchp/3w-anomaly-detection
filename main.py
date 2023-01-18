@@ -78,6 +78,7 @@ class Main():
         # make scaler
         train_dataset = TimeDataset(train_xs, train_ys, fc_edge_index, mode='train', config=cfg)
         normalizer = train_dataset.normalizer
+        self.normalizer = normalizer
         test_dataset = TimeDataset(test_xs, test_ys, fc_edge_index, mode='test', config=cfg, normalizer=normalizer)
 
         train_dataloader, val_dataloader = self.get_loaders(train_dataset, train_config['seed'], train_config['batch'], val_ratio=train_config['val_ratio'])
@@ -265,6 +266,10 @@ if __name__ == "__main__":
 
     main = Main(train_config, env_config, debug=False)
     main.run()
+
+    import pickle
+    with open('main_rerun2.pkl', 'wb') as f:
+        pickle.dump(main, f)
 
 
 
